@@ -44,5 +44,3 @@ class CustomPlotter(object):
         ax = plt.axes(projection='3d')
         ax.contour3D(sensor_idx_axis, time_axis, voltage_grid, 100, cmap='coolwarm')
         plt.show()
-
-

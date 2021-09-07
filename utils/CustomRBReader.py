@@ -1,13 +1,13 @@
 from typing import *
 import pandas as pd
 import numpy as np
-from typing import Tuple
+import os
 
 
 class CustomRBReader(object):
     __FREQUENCY = 256
 
-    def __init__(self, read_path):
+    def __init__(self, read_path=None):
         if not isinstance(read_path, str):
             raise TypeError
         else:
@@ -35,18 +35,20 @@ class CustomRBReader(object):
             lines = file.readlines()
             file.close()
         lines = list(map(lambda line: str(line).strip("b'# ").split(), lines))
-        self.data = [lines[0], lines[4:]] # only name of subject and data without dataset description
+        self.data = [lines[0], lines[4:]]  # only name of subject and data without dataset description
 
     def get_channels(self) -> list:
+        columns = ['time']
         channels = [channel[1] for channel in self.data[1][0::257]]
-        return channels
+        columns.extend(channels)
+        return columns
 
     def prepare_df(self) -> dict:
         del self.data[1][0::257]
         res = [float(sample[3].strip('\\n')) for sample in self.data[1]]
         res = np.array(res).reshape(64, 256).transpose()
-        df = pd.DataFrame(np.array(res), index=self.time_axis, columns=self.get_channels())
+        res = np.concatenate((self.time_axis.reshape(-1, 1), res), axis=1)
+        #df = pd.DataFrame(res, columns=self.get_channels())
         return {'subject': self.data[0][0],
                 'data': res,
-                'data_frame': df}
-
+                'label': self.data[0][0][3]}
